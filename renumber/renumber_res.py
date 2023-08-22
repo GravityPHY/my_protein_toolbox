@@ -10,6 +10,7 @@ from Bio.PDB.Residue import Residue
 from Bio import SeqIO, Align
 
 import warnings
+
 warnings.filterwarnings('ignore')
 
 amino_acid_map = {
@@ -18,6 +19,7 @@ amino_acid_map = {
     "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P",
     "SER": "S", "THR": "T", "TRP": "W", "TYR": "Y", "VAL": "V"
 }
+
 
 def in_range(number, range_list):
     is_in_range = False
@@ -29,11 +31,15 @@ def in_range(number, range_list):
     return is_in_range, range_index
 
 
-def renumber(fasta_seq, PDB_structure, new_PDB_name):
+def renumber(fasta_seq, PDB_structure, chain_name=None, new_PDB_name=None):
     # check number of chain in the structure
-    chain_id = [chain.id for chain in structure.get_chains()]
-    assert len(chain_id) == 1
-    chain_name = chain_id[0]
+    if not chain_name:
+        chain_id = [chain.id for chain in structure.get_chains()]
+        assert len(chain_id) == 1
+        chain_name = chain_id[0]
+    else:
+        chain_name = chain_name
+
     PDB_chain = PDB_structure[0][chain_name]
     PDB_chain_seq = PPBuilder().build_peptides(PDB_chain)[0].get_sequence()
     aligner = Align.PairwiseAligner()
@@ -53,6 +59,7 @@ def renumber(fasta_seq, PDB_structure, new_PDB_name):
             res.id = (h, num, ins)
             new_chain.add(res)
 
+    assert new_PDB_name is not None
     io = PDBIO()
     io.set_structure(PDB_structure)
     io.save(f"{new_PDB_name}.pdb")
