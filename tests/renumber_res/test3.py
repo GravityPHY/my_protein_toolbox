@@ -78,3 +78,15 @@ def renumber(fasta_seq, PDB_structure, chain_name=None, new_PDB_name=None):
     io.set_structure(PDB_structure)
     io.save(f"{new_PDB_name}.pdb")
 
+
+if __name__ == '__main__':
+    fasta = next(
+        SeqIO.parse('/projectnb2/docking/imhaoyu/my_protein_toolbox/tests/renumber_res/case_3/7POW.fa', 'fasta'))
+    fasta_seq = fasta.seq
+    parser = PDBParser()
+    structure = parser.get_structure('7POW',
+                                     '/projectnb2/docking/imhaoyu/my_protein_toolbox/tests/renumber_res/case_3/7POW.pdb')
+    renumber(fasta_seq, structure, chain_name='A', new_PDB_name='/projectnb2/docking/imhaoyu/my_protein_toolbox/tests/renumber_res/case_3/7POW_A')
+   # with open('/projectnb2/docking/imhaoyu/my_protein_toolbox/tests/renumber_res/case_2/7MDE.pdb') as handle:
+    #    pdb_seq = next(SeqIO.parse(handle, "pdb-atom"))
+    #renumber(fasta_seq, structure, chain_name='A', new_PDB_name='7MDE_AB')
