@@ -1,0 +1,1 @@
+```python3 process_cluspro_output.py --base_path /projectnb2/docking/imhaoyu/ClusPro_transmembrane/piper-workspace/7ZK3 --save_path /projectnb2/docking/imhaoyu/ClusPro_transmembrane/piper-workspace/7ZK3/cluspro_models```

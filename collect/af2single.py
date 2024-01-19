@@ -71,7 +71,7 @@ def get_highest_confidence_pdb(dir_save_prediction_files, pdb_id, total_model=5,
     max_confidence = -float('inf')
     max_conf_pdb = None
     assert isinstance(total_model, int)
-    for i in range(1,total_model+1):
+    for i in range(1, total_model + 1):
         txt_path, pdb_path = get_match_txt_pdb(dir_save_prediction_files, pdb_id, i)
         confidence_dict = txt_to_json(txt_path)
         score = confidence_dict[key]
@@ -91,7 +91,7 @@ def copy_pdb(pdb_path, destination_dir, destination_filename):
     """
     assert os.path.isdir(destination_dir)
     dst_path = os.path.join(destination_dir, destination_filename)
-    os.makedirs(os.path.dirname(dst_path),exist_ok=True)
+    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
     shutil.copyfile(pdb_path, dst_path)
     print(f'Finish copying {pdb_path} to {dst_path}')
 
@@ -106,10 +106,27 @@ def prepare_piper_input(pdb_id,
 
 
 def read_csv_worksheet(csv_path):
-    pass
+    rec_lig = []
+    with open(csv_path, 'r') as file:
+        csv_reader = csv.reader(file)
+        next(csv_reader)
+
+        for row in csv_reader:
+            if len(row) == 2:
+                rec_lig.append(('rec', row[0]))
+                rec_lig.append(('lig', row[1]))
+    return rec_lig
 
 
 if __name__ == '__main__':
-    prepare_piper_input('1KPL_1',
-                        '/projectnb2/docking/imhaoyu/transmebrane/_data_ALLDIMERTMproteins/AF2monomer/output_models',
-                        '/projectnb2/docking/imhaoyu/ClusPro_transmembrane/piper-workspace')
+    csv_path = '/projectnb2/docking/imhaoyu/my_protein_toolbox/run_example/collect/rec_lig_name.csv'
+    work_list=read_csv_worksheet(csv_path)
+    for item in work_list:
+        piper_input_type, pdb_id= item
+        prepare_piper_input(pdb_id,
+                            '/projectnb2/docking/imhaoyu/transmebrane/_data_ALLDIMERTMproteins/AF2monomer/output_models',
+                            '/projectnb2/docking/imhaoyu/ClusPro_transmembrane/piper-workspace',
+                            piper_input_type=piper_input_type)
+    # prepare_piper_input('1KPL_1',
+    #                    '/projectnb2/docking/imhaoyu/transmebrane/_data_ALLDIMERTMproteins/AF2monomer/output_models',
+    #                    '/projectnb2/docking/imhaoyu/ClusPro_transmembrane/piper-workspace')
