@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score
 
 
 def _binary_clf_curve(y_true, y_score):
@@ -14,9 +15,15 @@ def _binary_clf_curve(y_true, y_score):
     assert len(y_score) == len(y_true)
     # sort predicted scores in descending order
     # and also reorder corresponding truth values
+
+    min_val=np.min(y_score)
+    max_val=np.max(y_score)
     desc_score_indices = np.argsort( y_score)[::-1]
-    y_score = y_true[desc_score_indices]
-    y_true =  y_score[desc_score_indices]
+    y_score = y_score[desc_score_indices]#(y_score[desc_score_indices]-min_val)/(max_val - min_val)
+    y_true = y_true[desc_score_indices]
+
+    print(y_score)
+
 
     # y_score typically consists of tied values. Here we extract
     # the indices associated with the distinct values. We also
@@ -88,6 +95,11 @@ def _plot_roc_auc(y_true, y_score, save=None):
     plt.ylabel('true positive rate')
     plt.title('Receiver Operator Characteristic')
     plt.show()
+
+
+def sklearn_roc_auc(y_true, y_score):
+    auc=roc_auc_score(y_true, y_score)
+    return auc
 
 
 #if __name__ == "__main__":
