@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 from pathlib import Path
 
 import pymol
@@ -14,8 +15,8 @@ def analyze_contacts(structure_files,
     """
 
     :param structure_files:
-    :param receptor_chains:
-    :param ligand_chains:
+    :param receptor_chains: string of names of receptor chains
+    :param ligand_chains: string of names of ligand chains
     :param d_cutoff:
     :return:
     """
@@ -25,10 +26,10 @@ def analyze_contacts(structure_files,
         cmd.load(structure,"complex")
         structure_name=Path(structure).stem
         selection_name = f"ligand_contacts_{structure_name}"
-        cmd.select(selection_name,f"(br. (chain {ligand_chains})) within {d_cutoff} of chain {receptor_chains}")
+        cmd.select(selection_name,f"(br. (chain {'+'.join(ligand_chains)})) within {d_cutoff} of chain {'+'.join(receptor_chains)}")
         contacts = cmd.get_model(selection_name)
         for atom in contacts.atom:
-            residue_id = (atom.resn, atom.resi)  # Tuple of residue name and ID
+            residue_id = (atom.chain, atom.resn, atom.resi)  # Tuple of residue name and ID
             if residue_id not in contact_count:
                 contact_count[residue_id] = 0
             contact_count[residue_id] += 1
@@ -54,9 +55,9 @@ def update_bfactor(pdb_file,contact_frequency,ligand_chains="L"):
     structure = clean_bfactors(pdb_file)
     for model in structure:
         for chain in model:
-            if chain.id == ligand_chains:
+            if chain.id in ligand_chains:
                 for residue in chain:
-                    res_id = (residue.get_resname(), str(residue.get_id()[1]))
+                    res_id = (chain.id, residue.get_resname(), str(residue.get_id()[1]))
                     if res_id in contact_frequency:
                         print("yes")
                         frequency = contact_frequency[res_id]
@@ -67,11 +68,11 @@ def update_bfactor(pdb_file,contact_frequency,ligand_chains="L"):
     updated_pdb_file=os.path.splitext(pdb_file)[0]+"_bfactor.pdb"
     io.save(updated_pdb_file)
 
-pdb_dir="/projectnb2/docking/imhaoyu/24_epitope_mapping/database/ABAG/AlphaFold3/multiseed/test_case/8GZ5_pdb"
+pdb_dir="/projectnb2/docking/imhaoyu/24_epitope_mapping/database/ABAG/AlphaFold3/multiseed/pdb/7SU1"
 structure_files=os.listdir(pdb_dir)
 structure_paths=[os.path.join(pdb_dir,i) for i in structure_files]
-contact_frequency = analyze_contacts(structure_paths, receptor_chains='B', ligand_chains='A')
+contact_frequency = analyze_contacts(structure_paths, receptor_chains='AB', ligand_chains='C')
 print(contact_frequency)
-update_bfactor("/projectnb2/docking/imhaoyu/24_epitope_mapping/database/ABAG/AlphaFold3/multiseed/test_case/8GZ5_pdb/fold_8gz5_1_model_0.pdb",
+update_bfactor("/projectnb2/docking/imhaoyu/24_epitope_mapping/database/ABAG/AlphaFold3/multiseed/mapping_test/fold_7su1_1_model_0.pdb",
                contact_frequency,
-               ligand_chains="A")
+               ligand_chains="C")
