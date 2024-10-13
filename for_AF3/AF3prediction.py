@@ -2,6 +2,7 @@ import os
 import json
 import pathlib
 from pathlib import Path
+from Bio.PDB import MMCIFParser, NeighborSearch, Selection
 
 
 class AF3model:
@@ -18,7 +19,7 @@ class AF3model:
 
     def get_prefix(self, path):
         file_name = self.get_file_name(path)
-        prefix = "_".join(file_name.split("_")[0:3])
+        prefix = "_".join(file_name.split("_")[0:-2])
         return prefix
 
     def get_suffix(self, path):
@@ -67,6 +68,28 @@ class AF3model:
         filename = prefix + midfix + str(model_num) + suffix
         full_path = os.path.join(model_dir, filename)
         return full_path
+
+    def select_interface(self,cif_path, part_1,part_2):
+        parser = MMCIFParser()
+        structure = parser.get_structure('complex', cif_path)
+
+        chain_1 = [structure[0][name] for name in part_1]
+        chain_2 = [structure[0][name] for name in part_2]
+
+        atoms_1 = Selection.unfold_entities(chain_1, 'A')  # 'A' is for atoms
+        atoms_2 = Selection.unfold_entities(chain_2, 'A')
+
+        cutoff_distance = 5.0
+        neighbor_search = NeighborSearch(atoms_2)
+
+        interface_atoms_ = [atom for atom in atoms_1 if neighbor_search.search(atom.coord, cutoff_distance)]
+
+        b_factors = [atom.get_bfactor() for atom in interface_atoms_AB]
+
+        # Calculate the average B-factor
+        average_bfactor = np.mean(b_factors)
+
+        return average_bfactor
 
     def cif_reader(self):
         raise NotImplemented
