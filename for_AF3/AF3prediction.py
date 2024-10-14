@@ -1,6 +1,7 @@
 import os
 import json
 import pathlib
+import numpy as np
 from pathlib import Path
 from Bio.PDB import MMCIFParser, NeighborSearch, Selection
 
@@ -69,7 +70,7 @@ class AF3model:
         full_path = os.path.join(model_dir, filename)
         return full_path
 
-    def select_interface(self,cif_path, part_1,part_2):
+    def select_interface(self, cif_path, part_1, part_2):
         parser = MMCIFParser()
         structure = parser.get_structure('complex', cif_path)
 
@@ -80,11 +81,15 @@ class AF3model:
         atoms_2 = Selection.unfold_entities(chain_2, 'A')
 
         cutoff_distance = 5.0
-        neighbor_search = NeighborSearch(atoms_2)
+        neighbor_search_2 = NeighborSearch(atoms_2)
+        interface_atoms_2 = [atom for atom in atoms_1 if neighbor_search_2.search(atom.coord, cutoff_distance)]
 
-        interface_atoms_ = [atom for atom in atoms_1 if neighbor_search.search(atom.coord, cutoff_distance)]
+        neighbor_search_1 = NeighborSearch(atoms_1)
+        interface_atoms_1 = [atom for atom in atoms_2 if neighbor_search_1.search(atom.coord, cutoff_distance)]
 
-        b_factors = [atom.get_bfactor() for atom in interface_atoms_AB]
+        interface_atoms_ = interface_atoms_1 + interface_atoms_2
+
+        b_factors = [atom.get_bfactor() for atom in interface_atoms_]
 
         # Calculate the average B-factor
         average_bfactor = np.mean(b_factors)
@@ -101,3 +106,4 @@ if __name__ == "__main__":
     model = AF3model("/projectnb2/docking/imhaoyu/my_protein_toolbox/for_AF3/AF3_unzip/7SGM/fold_7sgm_1_model_0.cif")
     print(model.prefix)
     print(model.get_score("ranking_score"))
+    print(model.select_interface(model.model_path,"BC","A"))
