@@ -2,8 +2,12 @@ import os
 import json
 import pathlib
 import numpy as np
+import pandas as pd
 from pathlib import Path
-from Bio.PDB import MMCIFParser, NeighborSearch, Selection
+
+from Bio.PDb import PDBIO
+from Bio.PDB import MMCIFParser
+from Bio.PDB import NeighborSearch, Selection
 
 
 class AF3model:
@@ -70,7 +74,7 @@ class AF3model:
         full_path = os.path.join(model_dir, filename)
         return full_path
 
-    def select_interface(self, cif_path, part_1, part_2):
+    def select_interface_atoms(self, cif_path, part_1, part_2):
         parser = MMCIFParser()
         structure = parser.get_structure('complex', cif_path)
 
@@ -88,13 +92,28 @@ class AF3model:
         interface_atoms_1 = [atom for atom in atoms_2 if neighbor_search_1.search(atom.coord, cutoff_distance)]
 
         interface_atoms_ = interface_atoms_1 + interface_atoms_2
+        return interface_atoms_
 
-        b_factors = [atom.get_bfactor() for atom in interface_atoms_]
-
-        # Calculate the average B-factor
+    def get_interface_bfactors(self, cif_path, part_1, part_2):
+        interface_atoms=self.select_interface_atoms(cif_path,part_1,part_2)
+        b_factors = [atom.get_bfactor() for atom in interface_atoms]
         average_bfactor = np.mean(b_factors)
-
         return average_bfactor
+
+    def get_antigen_interface_atoms(self,cif_path,antigen_ch, antibody_ch):
+        parser = MMCIFParser()
+        structure = parser.get_structure('complex', cif_path)
+
+        antigen = [structure[0][name] for name in antigen_ch]
+        antibody = [structure[0][name] for name in antibody_ch]
+
+        atoms_antigen = Selection.unfold_entities(antigen, 'A')  # 'A' is for atoms
+        atoms_antibody = Selection.unfold_entities(antibody, 'A')
+
+        cutoff_distance = 5.0
+        neighbor_search = NeighborSearch(atoms_antibody)
+        antigen_interface_atoms_ = [(atom.get_serial_number(),atom) for  atom in atoms_antigen if neighbor_search.search(atom.coord, cutoff_distance)]
+        return antigen_interface_atoms_
 
     def cif_reader(self):
         raise NotImplemented
@@ -106,4 +125,5 @@ if __name__ == "__main__":
     model = AF3model("/projectnb2/docking/imhaoyu/my_protein_toolbox/for_AF3/AF3_unzip/7SGM/fold_7sgm_1_model_0.cif")
     print(model.prefix)
     print(model.get_score("ranking_score"))
-    print(model.select_interface(model.model_path,"BC","A"))
+    print(model.select_interface_atoms(model.model_path,"BC","A"))
+    print(model.get_antigen_interface_atoms(model.model_path,"A","BC"))
